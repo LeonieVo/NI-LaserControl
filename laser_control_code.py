@@ -58,39 +58,39 @@ def parse_config_file(file_path):
         print(f"Error reading configuration file: {e}")
 
     return trigger_points, block_zeit_ms
-
-# Parse the configuration file to get trigger points and block time
-trigger_points, block_zeit_ms = parse_config_file(selected_filename)#  (config_file_path)
+    print(f"Selected triggering file: {selected_filename}")
+    
+## Parse the configuration file to get trigger points and block time
+#trigger_points, block_zeit_ms = parse_config_file(selected_filename)#  (config_file_path)
 # Parse configuration files for single Lasers
 #blue
-blue_path = r"Z:\_personalDATA\JS+LV_4F-TIRF\Software\Python_Trigger\new_configurations\Config_OnlyBlueLaser.txt"
+blue_path = r"C:\Users\4F\Desktop\TriggerConfigs\TriggerConfigsForPythonTrigger\Config_OnlyBlueLaser.txt"
 TP_OnlyB, BT_OnlyB = parse_config_file(blue_path)
 #green
-green_path = r"Z:\_personalDATA\JS+LV_4F-TIRF\Software\Python_Trigger\new_configurations\Config_OnlyGreenLaser.txt"
+green_path = r"C:\Users\4F\Desktop\TriggerConfigs\TriggerConfigsForPythonTrigger\Config_OnlyGreenLaser.txt"
 TP_OnlyG, BT_OnlyG = parse_config_file(green_path)
 #orange
-orange_path = r"Z:\_personalDATA\JS+LV_4F-TIRF\Software\Python_Trigger\new_configurations\Config_OnlyOrangeLaser.txt"
+orange_path = r"C:\Users\4F\Desktop\TriggerConfigs\TriggerConfigsForPythonTrigger\Config_OnlyOrangeLaser.txt"
 TP_OnlyO, BT_OnlyO = parse_config_file(orange_path)
 #red
-red_path = r"Z:\_personalDATA\JS+LV_4F-TIRF\Software\Python_Trigger\new_configurations\Config_OnlyRedLaser.txt"
+red_path = r"C:\Users\4F\Desktop\TriggerConfigs\TriggerConfigsForPythonTrigger\Config_OnlyRedLaser.txt"
 TP_OnlyR, BT_OnlyR = parse_config_file(red_path)
 
-# Fallback to default if not found
-if block_zeit_ms is None:
-    block_zeit_ms = 200  # Default value
+## Fallback to default if not found
+#if block_zeit_ms is None:
+ #   block_zeit_ms = 200  # Default value
     
 # default for triggering single lasers
 Single_Laser = [(29, 129)]  # last point has to be OFF
 block_zeit_ms_1Laser =130
 
-# Print results for confirmation
-print("Parsed Trigger Points:")
-for device, intervals in trigger_points.items():
-    print(f"{device}: {intervals}")
-print(f"Block Zeit (ms): {block_zeit_ms}")
+## Print results for confirmation
+#print("Parsed Trigger Points:")
+#for device, intervals in trigger_points.items():
+#    print(f"{device}: {intervals}")
+#print(f"Block Zeit (ms): {block_zeit_ms}")
 
-# Calculate sample rate
-sample_rate = 10**6 / block_zeit_ms  # This remains unchanged
+# define defaults
 repeat_count =-1   # Default: repeat indefinitely. Change to a positive number to pause after that many blocks.
 wait_time = 0       # Default: no pause. Set to a number (in seconds) to pause.
 recording_time = -1 # Default: record non-stop. Change to a positive number in seconds to stop after that.
@@ -181,7 +181,8 @@ def run_task():
                 # Use a temporary off-task to turn all channels off.
                 with nidaqmx.Task() as off_task:
                     off_task.do_channels.add_do_chan("Dev1/port0/line0:7", line_grouping=LineGrouping.CHAN_PER_LINE)
-                    off_task.write([False, False, False, False, False, False, False, False], auto_start=True)
+                    off_task.write([False, False, False, False, False, False, False, False])
+                    off_task.start()  # Explicitly start the task
             
             # Optional: a short delay to allow the hardware to fully release channels.
             time.sleep(0.01)
@@ -396,40 +397,40 @@ def run_red_laser_task():
         print(f"DAQmx Error: {e}")
 
 # Plotting function for trigger points
-def plot_trigger_points(fig):
-    ax = fig.add_subplot(111)
-
-    y_positions = {
-        "Cam o/r": 8.7,
-        "Cam b/g": 7.6,
-        "Laser blue": 6.5,
-        "Laser green": 5.4,
-        "Laser orange": 4.3,
-        "Laser red": 3.2,
-        "shutter in blue detection": 2.1,
-        "shutter in orange detection": 1
-    }
-
-    time_points = [i / 1000.0 for i in range(0, block_zeit_ms + 1, 1)]  # 0 to 0.2 sec with 0.001 sec intervals
-
-    for name, intervals in trigger_points.items():
-        signal = [0] * (block_zeit_ms + 1)  # Initialize all to 0 (off)
-        for start, end in intervals:
-            for i in range(start, end):  # Mark the signal as on (1) for the specified intervals
-                signal[i] = 1
-
-        # Shift the signal up by the y_position of the device
-        signal = [s + y_positions[name] for s in signal]
-
-        ax.step(time_points[:block_zeit_ms], signal[:block_zeit_ms], label=name, where='post')
-
-    ax.set_yticks(list(y_positions.values()))
-    ax.set_yticklabels(list(y_positions.keys()))
-    ax.set_xlabel("Time (seconds)")
-    ax.set_ylabel("On/Off States")
-    ax.set_title("Trigger Configuration ")
-    ax.grid(True)
-    ax.legend(loc='upper right')
+def plot_trigger_points(fig, trigger_points):
+        ax = fig.add_subplot(111)
+    
+        y_positions = {
+            "Cam o/r": 8.7,
+            "Cam b/g": 7.6,
+            "Laser blue": 6.5,
+            "Laser green": 5.4,
+            "Laser orange": 4.3,
+            "Laser red": 3.2,
+            "shutter in blue detection": 2.1,
+            "shutter in orange detection": 1
+        }
+    
+        time_points = [i / 1000.0 for i in range(0, block_zeit_ms + 1, 1)]  # 0 to 0.2 sec with 0.001 sec intervals
+    
+        for name, intervals in trigger_points.items():
+            signal = [0] * (block_zeit_ms + 1)  # Initialize all to 0 (off)
+            for start, end in intervals:
+                for i in range(start, end):  # Mark the signal as on (1) for the specified intervals
+                    signal[i] = 1
+    
+            # Shift the signal up by the y_position of the device
+            signal = [s + y_positions[name] for s in signal]
+    
+            ax.step(time_points[:block_zeit_ms], signal[:block_zeit_ms], label=name, where='post')
+    
+        ax.set_yticks(list(y_positions.values()))
+        ax.set_yticklabels(list(y_positions.keys()))
+        ax.set_xlabel("Time (seconds)")
+        ax.set_ylabel("On/Off States")
+        ax.set_title("Trigger Configuration ")
+        ax.grid(True)
+        ax.legend(loc='upper right')
 
 def start_task():
     global running
@@ -484,7 +485,7 @@ def stop_red_laser():
     global red_laser_running
     red_laser_running = False
 def update_parameters():
-    global repeat_count, wait_time, repeat_count_entry, wait_time_entry, recording_time, recording_time_entry
+    global repeat_count, wait_time, repeat_count_entry, wait_time_entry, recording_time, recording_time_entry, selected_filename
     try:
         repeat_count = int(repeat_count_entry.get())
     except ValueError:
@@ -497,20 +498,41 @@ def update_parameters():
         recording_time = float(recording_time_entry.get())
     except ValueError:
         recording_time = -1
+# Function to update the plot after file selection
+def update_plot():
+    global selected_filename, fig, canvas, trigger_points
+    # Parse the configuration file
+    if selected_filename:        
+        # Clear the figure and plot new data
+        fig.clear()  # Clear the figure to prepare for new plot
+        plot_trigger_points(fig, trigger_points)  # Plot the new trigger points
+        # Draw the updated canvas
+        canvas.draw()
         
 # open config file
 def select_file():
-    global selected_filename  # Declare it as global to modify it
+    global selected_filename, trigger_points, block_zeit_ms  # Declare it as global to modify it
     selected_filename = filedialog.askopenfilename(
         title='Open a file',
         initialdir='/',
         filetypes=(('Text files', '*.txt'),)
         )
-    print(f"Selected triggering file: {selected_filename}")
-        
+    # Now parse the selected file
+    if selected_filename:  # Check if a file is selected
+        trigger_points, block_zeit_ms = parse_config_file(selected_filename)
+    # Print results for confirmation
+    print("Parsed Trigger Points:")
+    for device, intervals in trigger_points.items():
+        print(f"{device}: {intervals}")
+    print(f"Block Zeit (ms): {block_zeit_ms}")
+    # Calculate sample rate
+    sample_rate = 10**6 / block_zeit_ms  # This remains unchanged
+    # Update the plot after file selection
+    update_plot()
+    
 # Tkinter GUI setup
 def create_gui():
-    global repeat_count_entry, wait_time_entry, recording_time_entry  # Declare as global so update_parameters() can access them
+    global repeat_count_entry, wait_time_entry, recording_time_entry, fig, canvas # Declare as global so update_parameters() can access them
     root = Tk()
     root.title("Laser Control")
     
@@ -603,12 +625,19 @@ def create_gui():
     recording_time_entry.grid(column=3, row=3, sticky="ew")
     
     # Matplotlib figure and canvas for the graph
+    # Create initial figure for plotting
     fig = plt.Figure(figsize=(12, 4), dpi=100)
-    plot_trigger_points(fig)  # Plot the trigger points on the graph
-
-    canvas = FigureCanvasTkAgg(fig, master=frame1)  # A tk.DrawingArea
+    # Initial canvas for the figure (blank initially)
+    canvas = FigureCanvasTkAgg(fig, master=frame1)
     canvas.draw()
     canvas.get_tk_widget().grid(row=4, column=0, columnspan=4)
+    #fig = plt.Figure(figsize=(12, 4), dpi=100)
+    #if selected_filename:
+     #   plot_trigger_points(fig)  # Plot the trigger points on the graph
+
+    #canvas = FigureCanvasTkAgg(fig, master=frame1)  # A tk.DrawingArea
+    #canvas.draw()
+   # canvas.get_tk_widget().grid(row=4, column=0, columnspan=4)
 
     root.mainloop()
 
