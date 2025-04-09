@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from nidaqmx.constants import LineGrouping
 
-# default path to the configuration file
-#config_file_path = r"Z:\_personalDATA\JS+LV_4F-TIRF\Software\Python_Trigger\new_configurations\2025-04-02_generated_config_bla.txt"
+# empty path to the configuration file in the Beginning
 selected_filename = ""
 # Function to parse the configuration file
 def parse_config_file(file_path):
@@ -60,8 +59,6 @@ def parse_config_file(file_path):
     return trigger_points, block_zeit_ms
     print(f"Selected triggering file: {selected_filename}")
     
-## Parse the configuration file to get trigger points and block time
-#trigger_points, block_zeit_ms = parse_config_file(selected_filename)#  (config_file_path)
 # Parse configuration files for single Lasers
 #blue
 blue_path = r"C:\Users\4F\Desktop\TriggerConfigs\TriggerConfigsForPythonTrigger\Config_OnlyBlueLaser.txt"
@@ -75,20 +72,6 @@ TP_OnlyO, BT_OnlyO = parse_config_file(orange_path)
 #red
 red_path = r"C:\Users\4F\Desktop\TriggerConfigs\TriggerConfigsForPythonTrigger\Config_OnlyRedLaser.txt"
 TP_OnlyR, BT_OnlyR = parse_config_file(red_path)
-
-## Fallback to default if not found
-#if block_zeit_ms is None:
- #   block_zeit_ms = 200  # Default value
-    
-# default for triggering single lasers
-Single_Laser = [(29, 129)]  # last point has to be OFF
-block_zeit_ms_1Laser =130
-
-## Print results for confirmation
-#print("Parsed Trigger Points:")
-#for device, intervals in trigger_points.items():
-#    print(f"{device}: {intervals}")
-#print(f"Block Zeit (ms): {block_zeit_ms}")
 
 # define defaults
 repeat_count =-1   # Default: repeat indefinitely. Change to a positive number to pause after that many blocks.
@@ -178,11 +161,7 @@ def run_task():
             # Check if a recording_time is set and reached, then stop the lasers.
             if recording_time != -1 and total_time >= recording_time:
                 print(f"Reached total reconding time. {total_time} seconds elapsed")
-                # Use a temporary off-task to turn all channels off.
-                with nidaqmx.Task() as off_task:
-                    off_task.do_channels.add_do_chan("Dev1/port0/line0:7", line_grouping=LineGrouping.CHAN_PER_LINE)
-                    off_task.write([False, False, False, False, False, False, False, False])
-                    off_task.start()  # Explicitly start the task
+                running = False
             
             # Optional: a short delay to allow the hardware to fully release channels.
             time.sleep(0.01)
@@ -201,12 +180,10 @@ def run_blue_laser_task():
                 # Add digital output channel for the blue laser
                 laser_blue_task.do_channels.add_do_chan("Dev1/port0/line0:7", line_grouping=LineGrouping.CHAN_PER_LINE)
                 
-                ## Generate the full block pattern for the blue laser (block_zeit_ms samples)
-                #pattern = [is_device_on(t, Single_Laser) for t in range(int(block_zeit_ms_1Laser))]
                 # Each call to generate_output() returns a list of 8 booleans.
                 pattern = [generate_output(t, TP_OnlyB) for t in range(int(BT_OnlyB))]
                 # Transpose the pattern so that the data is organized per channel:
-                # Resulting shape: 5 lists, each containing block_zeit_ms samples.
+                # Resulting shape: 8 lists, each containing block_zeit_ms samples.
                 pattern = list(map(list, zip(*pattern)))
                 
                 # Configure the onboard clock in FINITE mode for this block.
@@ -216,7 +193,7 @@ def run_blue_laser_task():
                     source='',
                     active_edge=Edge.RISING,
                     sample_mode=AcquisitionType.FINITE,
-                    samps_per_chan=int(BT_OnlyG)  #samps_per_chan=int(block_zeit_ms_1Laser)
+                    samps_per_chan=int(BT_OnlyG)  
                 )
 
                 # Write the block pattern and start the task automatically.
@@ -252,12 +229,10 @@ def run_green_laser_task():
                 # Add digital output channel for the green laser
                 laser_green_task.do_channels.add_do_chan("Dev1/port0/line0:7", line_grouping=LineGrouping.CHAN_PER_LINE)
                 
-                ## Generate the full block pattern for the green laser (block_zeit_ms samples)
-                #pattern = [is_device_on(t, Single_Laser) for t in range(int(block_zeit_ms_1Laser))]
                 # Each call to generate_output() returns a list of 8 booleans.
                 pattern = [generate_output(t, TP_OnlyG) for t in range(int(BT_OnlyG))]
                 # Transpose the pattern so that the data is organized per channel:
-                # Resulting shape: 5 lists, each containing block_zeit_ms samples.
+                # Resulting shape: 8 lists, each containing block_zeit_ms samples.
                 pattern = list(map(list, zip(*pattern)))
                 
                 # Configure the onboard clock in FINITE mode for this block.
@@ -267,7 +242,7 @@ def run_green_laser_task():
                     source='',
                     active_edge=Edge.RISING,
                     sample_mode=AcquisitionType.FINITE,
-                    samps_per_chan=int(BT_OnlyG)  #samps_per_chan=int(block_zeit_ms_1Laser)
+                    samps_per_chan=int(BT_OnlyG)  
                 )
 
                 # Write the block pattern and start the task automatically.
@@ -304,12 +279,10 @@ def run_orange_laser_task():
                 # Add digital output channel for the orange laser
                 laser_orange_task.do_channels.add_do_chan("Dev1/port0/line0:7", line_grouping=LineGrouping.CHAN_PER_LINE)
                 
-                ## Generate the full block pattern for the orange laser (block_zeit_ms samples)
-                #pattern = [is_device_on(t, Single_Laser) for t in range(int(block_zeit_ms_1Laser))]
                 # Each call to generate_output() returns a list of 8 booleans.
                 pattern = [generate_output(t, TP_OnlyO) for t in range(int(BT_OnlyO))]
                 # Transpose the pattern so that the data is organized per channel:
-                # Resulting shape: 5 lists, each containing block_zeit_ms samples.
+                # Resulting shape: 8 lists, each containing block_zeit_ms samples.
                 pattern = list(map(list, zip(*pattern)))
                 
                 # Configure the onboard clock in FINITE mode for this block.
@@ -319,7 +292,7 @@ def run_orange_laser_task():
                     source='',
                     active_edge=Edge.RISING,
                     sample_mode=AcquisitionType.FINITE,
-                    samps_per_chan=int(BT_OnlyG)  #samps_per_chan=int(block_zeit_ms_1Laser)
+                    samps_per_chan=int(BT_OnlyG) 
                 )
 
                 # Write the block pattern and start the task automatically.
@@ -355,13 +328,11 @@ def run_red_laser_task():
             with nidaqmx.Task() as laser_red_task:
                 # Add digital output channel for the red laser
                 laser_red_task.do_channels.add_do_chan("Dev1/port0/line0:7", line_grouping=LineGrouping.CHAN_PER_LINE)
-                
-                ## Generate the full block pattern for the red laser (block_zeit_ms samples)
-                #pattern = [is_device_on(t, Single_Laser) for t in range(int(block_zeit_ms_1Laser))]
+
                 # Each call to generate_output() returns a list of 8 booleans.
                 pattern = [generate_output(t, TP_OnlyR) for t in range(int(BT_OnlyR))]
                 # Transpose the pattern so that the data is organized per channel:
-                # Resulting shape: 5 lists, each containing block_zeit_ms samples.
+                # Resulting shape: 8 lists, each containing block_zeit_ms samples.
                 pattern = list(map(list, zip(*pattern)))
                 
                 # Configure the onboard clock in FINITE mode for this block.
@@ -371,7 +342,7 @@ def run_red_laser_task():
                     source='',
                     active_edge=Edge.RISING,
                     sample_mode=AcquisitionType.FINITE,
-                    samps_per_chan=int(BT_OnlyR)  #samps_per_chan=int(block_zeit_ms_1Laser)
+                    samps_per_chan=int(BT_OnlyR) 
                 )
 
                 # Write the block pattern and start the task automatically.
@@ -397,8 +368,8 @@ def run_red_laser_task():
         print(f"DAQmx Error: {e}")
 
 # Plotting function for trigger points
-def plot_trigger_points(fig, trigger_points):
-        ax = fig.add_subplot(111)
+def plot_trigger_points(fig, TP, BT):
+        ax = fig.add_subplot(111) # Create a single axes
     
         y_positions = {
             "Cam o/r": 8.7,
@@ -410,11 +381,21 @@ def plot_trigger_points(fig, trigger_points):
             "shutter in blue detection": 2.1,
             "shutter in orange detection": 1
         }
+        colors = {
+        "Cam o/r": "black",
+        "Cam b/g": "black",
+        "Laser blue": "deepskyblue",
+        "Laser green": "limegreen",
+        "Laser orange": "darkorange",
+        "Laser red": "red",
+        "shutter in blue detection": "navy",
+        "shutter in orange detection": "orange"
+        }
     
-        time_points = [i / 1000.0 for i in range(0, block_zeit_ms + 1, 1)]  # 0 to 0.2 sec with 0.001 sec intervals
+        time_points = [i / 1000.0 for i in range(0, BT + 1, 1)]  # 0 to 0.2 sec with 0.001 sec intervals
     
-        for name, intervals in trigger_points.items():
-            signal = [0] * (block_zeit_ms + 1)  # Initialize all to 0 (off)
+        for name, intervals in TP.items():
+            signal = [0] * (BT + 1)  # Initialize all to 0 (off)
             for start, end in intervals:
                 for i in range(start, end):  # Mark the signal as on (1) for the specified intervals
                     signal[i] = 1
@@ -422,15 +403,15 @@ def plot_trigger_points(fig, trigger_points):
             # Shift the signal up by the y_position of the device
             signal = [s + y_positions[name] for s in signal]
     
-            ax.step(time_points[:block_zeit_ms], signal[:block_zeit_ms], label=name, where='post')
+            ax.step(time_points[:BT], signal[:BT], label=name, where='post', color=colors.get(name, 'black'))
     
         ax.set_yticks(list(y_positions.values()))
         ax.set_yticklabels(list(y_positions.keys()))
         ax.set_xlabel("Time (seconds)")
         ax.set_ylabel("On/Off States")
-        ax.set_title("Trigger Configuration ")
+        #ax.set_title("Trigger Configuration ")
         ax.grid(True)
-        ax.legend(loc='upper right')
+        #ax.legend(loc='upper right')
 
 def start_task():
     global running
@@ -476,14 +457,17 @@ def stop_orange_laser():
     global orange_laser_running
     orange_laser_running = False
 
+# Start the red laser task independently
 def start_red_laser():
     global red_laser_running
     red_laser_running = True
     threading.Thread(target=run_red_laser_task).start()
 
+# Stop the red laser task independently
 def stop_red_laser():
     global red_laser_running
     red_laser_running = False
+    
 def update_parameters():
     global repeat_count, wait_time, repeat_count_entry, wait_time_entry, recording_time, recording_time_entry, selected_filename
     try:
@@ -498,14 +482,14 @@ def update_parameters():
         recording_time = float(recording_time_entry.get())
     except ValueError:
         recording_time = -1
+
 # Function to update the plot after file selection
 def update_plot():
-    global selected_filename, fig, canvas, trigger_points
+    global selected_filename, fig, canvas, trigger_points, block_zeit_ms
     # Parse the configuration file
-    if selected_filename:        
-        # Clear the figure and plot new data
-        fig.clear()  # Clear the figure to prepare for new plot
-        plot_trigger_points(fig, trigger_points)  # Plot the new trigger points
+    if trigger_points and block_zeit_ms: #selected_filename:        
+        fig.clf()  # Clear the entire figure, including axes
+        plot_trigger_points(fig, trigger_points, block_zeit_ms)  # Plot the new trigger points
         # Draw the updated canvas
         canvas.draw()
         
@@ -520,13 +504,14 @@ def select_file():
     # Now parse the selected file
     if selected_filename:  # Check if a file is selected
         trigger_points, block_zeit_ms = parse_config_file(selected_filename)
+        
     # Print results for confirmation
     print("Parsed Trigger Points:")
     for device, intervals in trigger_points.items():
         print(f"{device}: {intervals}")
     print(f"Block Zeit (ms): {block_zeit_ms}")
     # Calculate sample rate
-    sample_rate = 10**6 / block_zeit_ms  # This remains unchanged
+    #sample_rate = 10**6 / block_zeit_ms  # This remains unchanged
     # Update the plot after file selection
     update_plot()
     
@@ -535,12 +520,16 @@ def create_gui():
     global repeat_count_entry, wait_time_entry, recording_time_entry, fig, canvas # Declare as global so update_parameters() can access them
     root = Tk()
     root.title("Laser Control")
-    
+    #root.state('zoomed')
+                  
     frame1 = Frame(root, bg='white',padx=3, pady=3)
     frame2 = Frame(root, bg='grey80',padx=3, pady=3)
-    frame1.grid(row=0, sticky="ew")
-    frame2.grid(row=1, sticky="ew")
-    
+    frame1.grid(row=0, sticky="nsew")
+    frame2.grid(row=1, sticky="nsew")
+    root.grid_rowconfigure(1, weight=1)  # Make row 1 i.e frame 2expandable
+    frame2.grid_rowconfigure(3, weight=1) # Allow the canvas in frame2 to take up more space
+
+    # ---- frame 1 ----
     # open label
     open_label = Label(frame1, text="select your configuration file:", background='grey80')
     open_label.grid(column=0, row=0, sticky="ew")
@@ -552,7 +541,6 @@ def create_gui():
     )
     open_button.grid(column=1, row=0, sticky="ew")
 
-    
     # Start button for all lasers
     start_btn = Button(frame1, text="Start All Lasers", command=start_task, padx=20, pady=10, bg="green")
     start_btn.grid(column=0, row=1, sticky="ew")#, columnspan=2)
@@ -561,46 +549,10 @@ def create_gui():
     stop_btn = Button(frame1, text="Stop All Lasers", command=stop_task, padx=20, pady=10, bg="red")
     stop_btn.grid(column=1, row=1, sticky="ew")#, columnspan=2)
     
-    # Instruction label
-    label = Label(frame2, text="Control lasers individually:", padx=20, pady=20)
-    label.grid(column=0, row=0, columnspan=2)
-
-    # Start button for the blue laser only
-    start_blue_btn = Button(frame2, text="Start Blue Laser", command=start_blue_laser, padx=20, pady=10, bg="dodgerblue")
-    start_blue_btn.grid(column=0, row=2, sticky="ew")
-    
-    # Stop button for the blue laser only
-    stop_blue_btn = Button(frame2, text="Stop Blue Laser", command=stop_blue_laser, padx=20, pady=10, bg="darkblue",fg="white")
-    stop_blue_btn.grid(column=1, row=2, sticky="ew")    
-    
-    # Start button for the green laser only
-    start_green_btn = Button(frame2, text="Start Green Laser", command=start_green_laser, padx=20, pady=10, bg="chartreuse2")
-    start_green_btn.grid(column=0, row=3, sticky="ew")
-
-    # Stop button for the green laser only
-    stop_green_btn = Button(frame2, text="Stop Green Laser", command=stop_green_laser, padx=20, pady=10, bg="darkgreen",fg="white")
-    stop_green_btn.grid(column=1, row=3, sticky="ew")
-    
-    # Start button for the orange laser only
-    start_orange_btn = Button(frame2, text="Start Orange Laser", command=start_orange_laser, padx=20, pady=10, bg="orange")
-    start_orange_btn.grid(column=2, row=2, sticky="ew")
-
-    # Stop button for the orange laser only
-    stop_orange_btn = Button(frame2, text="Stop Orange Laser", command=stop_orange_laser, padx=20, pady=10, bg="darkorange3",fg="white")
-    stop_orange_btn.grid(column=3, row=2, sticky="ew")
-
-    # Start button for the red laser only
-    start_red_btn = Button(frame2, text="Start Red Laser", command=start_red_laser, padx=20, pady=10, bg="firebrick2")
-    start_red_btn.grid(column=2, row=3, sticky="ew")
-
-    # Stop button for the red laser only
-    stop_red_btn = Button(frame2, text="Stop Red Laser", command=stop_red_laser, padx=20, pady=10, bg="darkred",fg="white")
-    stop_red_btn.grid(column=3, row=3, sticky="ew")
-    
     # New parameters: Repeat Count and Wait Time and recording Time
     # TimeSettings label
     TimeSettings_label = Label(frame1, 
-                               text="The loop runs for the specified Repeat Count, waits for the set Wait Time, and then repeats this cycle until the Total Recording Time is reached. \n The Total Recording Time can also be set independently.", 
+                               text="The loop runs for the specified Repeat Count, waits for the set Wait Time, and then repeats this cycle until the Total Recording \n Time is reached. The Total Recording Time can also be set independently.", 
                                background='peach puff')
     TimeSettings_label.grid(column=2, row=0, columnspan=2, sticky="ew")
     # Label and Entry for Repeat Count
@@ -624,21 +576,76 @@ def create_gui():
     recording_time_entry.insert(0, str(recording_time))  # Insert default value
     recording_time_entry.grid(column=3, row=3, sticky="ew")
     
-    # Matplotlib figure and canvas for the graph
+    # Big Matplotlib figure and canvas for the graph
     # Create initial figure for plotting
-    fig = plt.Figure(figsize=(12, 4), dpi=100)
+    fig = plt.Figure(figsize=(16, 4), dpi=100)
     # Initial canvas for the figure (blank initially)
     canvas = FigureCanvasTkAgg(fig, master=frame1)
     canvas.draw()
-    canvas.get_tk_widget().grid(row=4, column=0, columnspan=4)
-    #fig = plt.Figure(figsize=(12, 4), dpi=100)
-    #if selected_filename:
-     #   plot_trigger_points(fig)  # Plot the trigger points on the graph
+    canvas.get_tk_widget().grid(row=4, column=0, columnspan=4, sticky="nsew")  # sticky="nsew" makes it expand
 
-    #canvas = FigureCanvasTkAgg(fig, master=frame1)  # A tk.DrawingArea
-    #canvas.draw()
-   # canvas.get_tk_widget().grid(row=4, column=0, columnspan=4)
+    
+    # ---- frame2 ----
+    # Instruction label
+    label = Label(frame2, text="Control lasers individually:", padx=2, pady=2)
+    label.grid(column=0, row=0, columnspan=4,sticky="ew")
 
+    # Start button for the blue laser only
+    start_blue_btn = Button(frame2, text="Start Blue Laser", command=start_blue_laser, padx=20, pady=5, bg="dodgerblue")
+    start_blue_btn.grid(column=0, row=1, sticky="ew")
+    
+    # Stop button for the blue laser only
+    stop_blue_btn = Button(frame2, text="Stop Blue Laser", command=stop_blue_laser, padx=20, pady=5, bg="darkblue",fg="white")
+    stop_blue_btn.grid(column=0, row=2, sticky="ew")    
+    
+    # Start button for the green laser only
+    start_green_btn = Button(frame2, text="Start Green Laser", command=start_green_laser, padx=20, pady=5, bg="chartreuse2")
+    start_green_btn.grid(column=1, row=1, sticky="ew")
+
+    # Stop button for the green laser only
+    stop_green_btn = Button(frame2, text="Stop Green Laser", command=stop_green_laser, padx=20, pady=5, bg="darkgreen",fg="white")
+    stop_green_btn.grid(column=1, row=2, sticky="ew")
+    
+    # Start button for the orange laser only
+    start_orange_btn = Button(frame2, text="Start Orange Laser", command=start_orange_laser, padx=20, pady=5, bg="orange")
+    start_orange_btn.grid(column=2, row=1, sticky="ew")
+
+    # Stop button for the orange laser only
+    stop_orange_btn = Button(frame2, text="Stop Orange Laser", command=stop_orange_laser, padx=20, pady=5, bg="darkorange3",fg="white")
+    stop_orange_btn.grid(column=2, row=2, sticky="ew")
+
+    # Start button for the red laser only
+    start_red_btn = Button(frame2, text="Start Red Laser", command=start_red_laser, padx=20, pady=5, bg="firebrick2")
+    start_red_btn.grid(column=3, row=1, sticky="ew")
+
+    # Stop button for the red laser only
+    stop_red_btn = Button(frame2, text="Stop Red Laser", command=stop_red_laser, padx=20, pady=5, bg="darkred",fg="white")
+    stop_red_btn.grid(column=3, row=2, sticky="ew")
+    # plot One Laser Only figures in frame 2
+    #Blue
+    figB = plt.Figure(figsize=(4, 2), dpi=100)
+    plot_trigger_points(figB, TP_OnlyB, BT_OnlyB)  # Plot the trigger points on the graph
+    canvasB = FigureCanvasTkAgg(figB, master=frame2)  # A tk.DrawingArea
+    canvasB.draw()
+    canvasB.get_tk_widget().grid(row=3, column=0, sticky="ns")
+    #Green
+    figG = plt.Figure(figsize=(4, 2), dpi=100)
+    plot_trigger_points(figG, TP_OnlyG, BT_OnlyG)  # Plot the trigger points on the graph
+    canvasG = FigureCanvasTkAgg(figG, master=frame2)  # A tk.DrawingArea
+    canvasG.draw()
+    canvasG.get_tk_widget().grid(row=3, column=1, sticky="ns")
+    #Orange
+    figO = plt.Figure(figsize=(4, 2), dpi=100)
+    plot_trigger_points(figO, TP_OnlyO, BT_OnlyO)  # Plot the trigger points on the graph
+    canvasO = FigureCanvasTkAgg(figO, master=frame2)  # A tk.DrawingArea
+    canvasO.draw()
+    canvasO.get_tk_widget().grid(row=3, column=2, sticky="ns")
+    figR = plt.Figure(figsize=(4, 2), dpi=100)
+    plot_trigger_points(figR, TP_OnlyR, BT_OnlyR)  # Plot the trigger points on the graph
+    canvasR = FigureCanvasTkAgg(figR, master=frame2)  # A tk.DrawingArea
+    canvasR.draw()
+    canvasR.get_tk_widget().grid(row=3, column=3, sticky="ns")
+    
     root.mainloop()
 
 # Run the GUI

@@ -3,7 +3,7 @@
 "Block Zeit (ms)":130
 
 channel0:"Cam o/r":29-129
-channel1:"Cam b/g":29-129
+channel1:"Cam b/g":130-130
 channel2:"Laser blue":130-130
 channel3:"Laser green":130-130
 channel4:"Laser orange":29-129
