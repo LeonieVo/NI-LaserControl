@@ -5,7 +5,7 @@
 channel0:"Cam o/r":29-129
 channel1:"Cam b/g":29-129
 channel2:"Laser blue":130-130
-channel3:"Laser green":29-129
+channel3:"Laser green":0-129
 channel4:"Laser orange":130-130
 channel5:"Laser red":130-130
 channel6:"shutter in blue detection":130-130
